@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UCLA Physician Salary Database (2010-2025)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --row-alt: #f8f9fb;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --header-bg: #1e3a5f;
+    --header-fg: #ffffff;
+    --input-bg: #ffffff;
+    --hover: #eef2ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141f;
+      --fg: #e8e8f0;
+      --muted: #9ca3af;
+      --border: #2e2e42;
+      --row-alt: #1a1a28;
+      --accent: #5b8def;
+      --accent-fg: #0b0b14;
+      --header-bg: #101c30;
+      --header-fg: #e8e8f0;
+      --input-bg: #1e1e2e;
+      --hover: #23233a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 12.5px; margin: 0 0 16px; }
+  .subtitle a { color: var(--accent); }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .controls input[type="search"] {
+    flex: 1 1 220px;
+    min-width: 160px;
+  }
+  .controls input, .controls select {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--fg);
+    font-size: 13.5px;
+  }
+  .result-count { color: var(--muted); font-size: 12.5px; margin-bottom: 8px; }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    color: var(--header-fg);
+    text-align: left;
+    padding: 9px 10px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  thead th .arrow { opacity: 0.6; font-size: 10px; margin-left: 3px; }
+  tbody td {
+    padding: 7px 10px;
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td.wrap-cell { white-space: normal; min-width: 160px; }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: var(--hover); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+  .redacted { color: var(--muted); font-style: italic; }
+  .est-flag { color: var(--accent); cursor: help; }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+  .pagination button:not(:disabled):hover { background: var(--hover); }
+  .pagination select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--fg); }
+
+  footer {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  footer a { color: var(--accent); }
+
+  .empty-state { padding: 30px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>UCLA Physician Salary Database</h1>
+  <p class="subtitle">
+    Health Sciences Compensation (HCOMP) faculty pay, Los Angeles, 2010&ndash;2025 &middot;
+    Source: <a href="https://ucannualwage.ucop.edu/wage/" target="_blank" rel="noopener">UC Annual Wage database</a>
+    &middot; <span id="recordCountMeta"></span>
+  </p>
+
+  <div class="controls">
+    <input type="search" id="searchBox" placeholder="Search name, title, department, or specialty&hellip;" aria-label="Search">
+    <select id="yearFilter" aria-label="Filter by year"></select>
+    <select id="deptFilter" aria-label="Filter by department"></select>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+
+  <div class="table-scroll">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th data-key="year">Year<span class="arrow"></span></th>
+          <th data-key="name">Name<span class="arrow"></span></th>
+          <th data-key="title">Title<span class="arrow"></span></th>
+          <th data-key="dept">Department<span class="arrow"></span></th>
+          <th data-key="spec">Specialty<span class="arrow"></span></th>
+          <th data-key="gross" class="num">Gross Pay<span class="arrow"></span></th>
+          <th data-key="reg" class="num">Regular<span class="arrow"></span></th>
+          <th data-key="ot" class="num">Overtime<span class="arrow"></span></th>
+          <th data-key="other" class="num">Other<span class="arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <button id="prevPage">&larr; Prev</button>
+    <span id="pageIndicator"></span>
+    <button id="nextPage">Next &rarr;</button>
+    <span style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+      Rows per page:
+      <select id="pageSize">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="250">250</option>
+      </select>
+    </span>
+  </div>
+
+  <footer>
+    <p><strong>About this data:</strong> Pay figures come directly from UC's own public payroll disclosure. Names shown as
+    <em>*****</em> are redacted by UC itself under federal student-privacy law (applies to anyone whose employment depended
+    on student status at any point that year, including medical residents/fellows).</p>
+    <p><strong>Department / Specialty is not part of UC's official data.</strong> It was inferred by cross-referencing each
+    name against the public <a href="https://npiregistry.cms.hhs.gov/" target="_blank" rel="noopener">NPI Registry</a>
+    (a federal database of licensed healthcare providers) and, for a small number of stale registry records, by manually
+    checking UCLA's own public directories directly. Entries marked with <span class="est-flag">&dagger;</span> had more
+    than one plausible name match in the registry and carry more name-collision risk than the rest. Rows with no
+    department/specialty at all mean no confident match was found (common for research-only faculty, or for staff who
+    have since left UCLA and no longer appear in current directories). This is a best-effort estimate, not an official
+    UCLA record, and should not be treated as verified identification of any individual's medical specialty.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Only flag Medium-confidence NPI matches as uncertain. "Manual" (X) rows were
+  // individually verified against UCLA's own public directory pages and are trustworthy;
+  // "High" (H) rows had an unambiguous single NPI match. Neither needs a caveat flag.
+  var CONF_LOW = { M: true };
+
+  var state = {
+    data: null,
+    filtered: [],
+    sortKey: 'gross',
+    sortDir: -1,
+    page: 1,
+    pageSize: 50,
+  };
+
+  fetch('data.json')
+    .then(function (r) { return r.json(); })
+    .then(function (d) { init(d); })
+    .catch(function (err) {
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="9" class="empty-state">Could not load data.json (' + err + ')</td></tr>';
+    });
+
+  function init(d) {
+    state.data = d;
+    document.getElementById('recordCountMeta').textContent =
+      d.meta.recordCount.toLocaleString() + ' records · last updated ' + d.meta.generated;
+
+    var yearSel = document.getElementById('yearFilter');
+    yearSel.innerHTML = '<option value="">All years</option>' +
+      d.meta.years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+
+    var deptSel = document.getElementById('deptFilter');
+    var deptOptions = d.depts.slice().sort();
+    deptSel.innerHTML = '<option value="">All departments</option>' +
+      deptOptions.map(function (dd, i) {
+        var idx = d.depts.indexOf(dd);
+        return '<option value="' + idx + '">' + dd + '</option>';
+      }).join('');
+
+    document.getElementById('searchBox').addEventListener('input', debounce(onFilterChange, 180));
+    document.getElementById('yearFilter').addEventListener('change', onFilterChange);
+    document.getElementById('deptFilter').addEventListener('change', onFilterChange);
+    document.getElementById('prevPage').addEventListener('click', function () { changePage(-1); });
+    document.getElementById('nextPage').addEventListener('click', function () { changePage(1); });
+    document.getElementById('pageSize').addEventListener('change', function (e) {
+      state.pageSize = parseInt(e.target.value, 10);
+      state.page = 1;
+      render();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('thead th'), function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-key');
+        if (state.sortKey === key) {
+          state.sortDir *= -1;
+        } else {
+          state.sortKey = key;
+          state.sortDir = (key === 'name' || key === 'title' || key === 'dept' || key === 'spec') ? 1 : -1;
+        }
+        applySort();
+        state.page = 1;
+        render();
+      });
+    });
+
+    onFilterChange();
+  }
+
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      clearTimeout(t);
+      var args = arguments;
+      t = setTimeout(function () { fn.apply(null, args); }, ms);
+    };
+  }
+
+  function onFilterChange() {
+    var q = document.getElementById('searchBox').value.trim().toLowerCase();
+    var yearVal = document.getElementById('yearFilter').value;
+    var deptVal = document.getElementById('deptFilter').value;
+    var d = state.data;
+
+    state.filtered = d.rows.filter(function (row) {
+      if (yearVal && String(row[0]) !== yearVal) return false;
+      if (deptVal !== '' && row[4] !== parseInt(deptVal, 10)) return false;
+      if (q) {
+        var first = row[1].toLowerCase();
+        var last = row[2].toLowerCase();
+        var title = d.titles[row[3]].toLowerCase();
+        var dept = row[4] != null ? d.depts[row[4]].toLowerCase() : '';
+        var spec = row[5] != null ? d.specs[row[5]].toLowerCase() : '';
+        var hay = first + ' ' + last + ' ' + title + ' ' + dept + ' ' + spec;
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    applySort();
+    state.page = 1;
+    render();
+  }
+
+  function applySort() {
+    var d = state.data;
+    var key = state.sortKey;
+    var dir = state.sortDir;
+    var getters = {
+      year: function (r) { return r[0]; },
+      name: function (r) { return (r[2] + ' ' + r[1]).toLowerCase(); },
+      title: function (r) { return d.titles[r[3]]; },
+      dept: function (r) { return r[4] != null ? d.depts[r[4]] : '￿'; },
+      spec: function (r) { return r[5] != null ? d.specs[r[5]] : '￿'; },
+      gross: function (r) { return r[6]; },
+      reg: function (r) { return r[7]; },
+      ot: function (r) { return r[8]; },
+      other: function (r) { return r[9]; },
+    };
+    var get = getters[key];
+    state.filtered.sort(function (a, b) {
+      var va = get(a), vb = get(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('thead th'), function (th) {
+      var arrow = th.querySelector('.arrow');
+      if (th.getAttribute('data-key') === key) {
+        arrow.textContent = dir === 1 ? '▲' : '▼';
+      } else {
+        arrow.textContent = '';
+      }
+    });
+  }
+
+  function changePage(delta) {
+    var maxPage = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    state.page = Math.min(maxPage, Math.max(1, state.page + delta));
+    render();
+  }
+
+  function money(n) {
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function render() {
+    var d = state.data;
+    var total = state.filtered.length;
+    var maxPage = Math.max(1, Math.ceil(total / state.pageSize));
+    state.page = Math.min(state.page, maxPage);
+    var start = (state.page - 1) * state.pageSize;
+    var pageRows = state.filtered.slice(start, start + state.pageSize);
+
+    document.getElementById('resultCount').textContent =
+      total.toLocaleString() + ' record' + (total === 1 ? '' : 's') + ' matched';
+
+    var body = document.getElementById('tableBody');
+    if (pageRows.length === 0) {
+      body.innerHTML = '<tr><td colspan="9" class="empty-state">No records match your search/filters.</td></tr>';
+    } else {
+      body.innerHTML = pageRows.map(function (r) {
+        var isRedacted = r[1] === '*****';
+        var nameCell = isRedacted
+          ? '<span class="redacted">***** (redacted)</span>'
+          : escapeHtml(r[2] + ', ' + r[1]);
+        var deptCell = r[4] != null ? escapeHtml(d.depts[r[4]]) : '<span class="muted">&mdash;</span>';
+        var specCell = r[5] != null ? escapeHtml(d.specs[r[5]]) : '<span class="muted">&mdash;</span>';
+        var flag = CONF_LOW[r[10]] ? ' <span class="est-flag" title="Lower-confidence specialty match">&dagger;</span>' : '';
+        return '<tr>' +
+          '<td>' + r[0] + '</td>' +
+          '<td>' + nameCell + '</td>' +
+          '<td class="wrap-cell">' + escapeHtml(d.titles[r[3]]) + '</td>' +
+          '<td class="wrap-cell">' + deptCell + flag + '</td>' +
+          '<td class="wrap-cell">' + specCell + '</td>' +
+          '<td class="num">' + money(r[6]) + '</td>' +
+          '<td class="num">' + money(r[7]) + '</td>' +
+          '<td class="num">' + money(r[8]) + '</td>' +
+          '<td class="num">' + money(r[9]) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('pageIndicator').textContent = 'Page ' + state.page + ' of ' + maxPage;
+    document.getElementById('prevPage').disabled = state.page <= 1;
+    document.getElementById('nextPage').disabled = state.page >= maxPage;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+})();
+</script>
+</body>
+</html>
