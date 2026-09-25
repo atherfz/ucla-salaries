@@ -1,6 +1,7 @@
-# UCLA Physician Salary Database (site)
+# UC Physician Salary Databases (site)
 
-Static, self-contained search page for the UCLA HCOMP salary dataset (2010-2025).
+Static, self-contained search pages for UC HCOMP salary datasets (2010-2025). The repo root is the
+UCLA database; `/ucsf/` and `/ucsd/` hold the same page/pipeline for UCSF and UC San Diego.
 
 ## Files
 - `index.html` - the page itself (search box, year/department filters, sortable table, pagination)
