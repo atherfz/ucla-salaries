@@ -197,7 +197,9 @@
     (a federal database of licensed healthcare providers) and, for stale or unmatched registry records, by an exact
     first+last name match against <a href="https://www.uclahealth.org/providers" target="_blank" rel="noopener">UCLA Health's
     own provider directory</a> and other UCLA public directories. Entries marked with <span class="est-flag">&dagger;</span> had more
-    than one plausible name match in the registry and carry more name-collision risk than the rest. Rows with no
+    than one plausible name match in the registry and carry more name-collision risk than the rest. Registry matches to a non-physician provider (e.g. a nurse or
+    counselor who happens to share the name) were discarded unless that person was the only California provider with
+    the name and practiced near the campus. Rows with no
     department/specialty at all mean no confident match was found (common for research-only faculty, or for staff who
     have since left UCLA and no longer appear in current directories). This is a best-effort estimate, not an official
     UCLA record, and should not be treated as verified identification of any individual's medical specialty.</p>

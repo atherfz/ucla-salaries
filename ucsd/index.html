@@ -198,8 +198,10 @@
     first+last name match against <a href="https://providers.ucsd.edu/" target="_blank" rel="noopener">UC San Diego Health's
     own provider directory</a> and CMS's public <a href="https://data.cms.gov/provider-data/dataset/mj5m-pzi6" target="_blank" rel="noopener">National
     Downloadable File</a> (Medicare enrollment records). Entries marked with <span class="est-flag">&dagger;</span> had more
-    than one plausible name match in the registry and carry more name-collision risk than the rest. Rows with no
-    department/specialty at all mean no confident match was found by any of these methods &mdash; roughly 1,300 of the ~4,600
+    than one plausible name match in the registry and carry more name-collision risk than the rest. Registry matches to a non-physician provider (e.g. a nurse or
+    counselor who happens to share the name) were discarded unless that person was the only California provider with
+    the name and practiced near the campus. Rows with no
+    department/specialty at all mean no confident match was found by any of these methods &mdash; roughly 1,500 of the ~4,600
     unique named people in this dataset &mdash; often because the person is non-clinical/research faculty who don't see
     patients, doesn't bill Medicare under their own NPI, or has since left UCSD and no longer appears in current
     directories. This is a best-effort estimate, not an official UCSD record, and should not be treated as verified
