@@ -194,11 +194,12 @@
     on student status at any point that year, including medical residents/fellows).</p>
     <p><strong>Department / Specialty is not part of UC's official data.</strong> It was inferred by cross-referencing each
     name against the public <a href="https://npiregistry.cms.hhs.gov/" target="_blank" rel="noopener">NPI Registry</a>
-    (a federal database of licensed healthcare providers), and for a smaller number of names with no confident registry
-    match, by an exact first+last name match against CMS's public <a href="https://data.cms.gov/provider-data/dataset/mj5m-pzi6" target="_blank" rel="noopener">National
+    (a federal database of licensed healthcare providers), and for names with no confident registry match, by an exact
+    first+last name match against <a href="https://www.ucihealth.org/clinicians" target="_blank" rel="noopener">UCI Health's own
+    clinician directory</a> and CMS's public <a href="https://data.cms.gov/provider-data/dataset/mj5m-pzi6" target="_blank" rel="noopener">National
     Downloadable File</a> (Medicare enrollment records). Entries marked with <span class="est-flag">&dagger;</span> had more
     than one plausible name match in the registry and carry more name-collision risk than the rest. Rows with no
-    department/specialty at all mean no confident match was found by either method &mdash; roughly 770 of the ~2,700
+    department/specialty at all mean no confident match was found by any of these methods &mdash; roughly 730 of the ~2,700
     unique named people in this dataset &mdash; often because the person is non-clinical/research faculty who don't see
     patients, doesn't bill Medicare under their own NPI, or has since left UCI and no longer appears in current
     directories. This is a best-effort estimate, not an official UCI record, and should not be treated as verified
@@ -209,7 +210,7 @@
 <script>
 (function () {
   // Only flag Medium-confidence NPI matches as uncertain. "Manual" (X) rows were resolved via
-  // an exact first+last name match in CMS's National Downloadable File and are trustworthy;
+  // an exact first+last name match in UCI Health's directory or CMS enrollment records and are trustworthy;
   // "High" (H) rows had an unambiguous single NPI match. Neither needs a flag.
   var CONF_LOW = { M: true };
 
