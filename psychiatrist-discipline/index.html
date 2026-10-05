@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psychiatrist Discipline Case Summaries (California, 2021-2026)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --input-bg: #ffffff;
+    --card-bg: #f4f6fa;
+    --chip-bg: #eef2ff;
+    --chip-fg: #1e3a8a;
+    --mark: #fde68a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141f;
+      --fg: #e8e8f0;
+      --muted: #9ca3af;
+      --border: #2e2e42;
+      --accent: #5b8def;
+      --accent-fg: #0b0b14;
+      --input-bg: #1e1e2e;
+      --card-bg: #1a1a28;
+      --chip-bg: #23233a;
+      --chip-fg: #c7d2fe;
+      --mark: #854d0e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 12.5px; margin: 0 0 14px; }
+
+  .about {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .about summary { cursor: pointer; font-weight: 600; }
+  .about p { margin: 8px 0 0; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--chip-bg);
+    color: var(--chip-fg);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .chip .n { opacity: 0.75; margin-left: 4px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; align-items: center; }
+  .controls input[type="search"] { flex: 1 1 260px; }
+  .controls input, .controls select {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--fg);
+    font-size: 13.5px;
+  }
+  .count { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+
+  .section-head { margin: 22px 0 6px; font-size: 15px; }
+  .section-intro { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+
+  .case {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .case h3 { font-size: 14.5px; margin: 0 0 4px; }
+  .case .meta { color: var(--muted); font-size: 12.5px; margin-bottom: 8px; }
+  .case .cat { display: inline-block; background: var(--chip-bg); color: var(--chip-fg); border-radius: 4px; padding: 1px 6px; margin-right: 6px; }
+  .case p { margin: 0 0 8px; }
+  .case .outcome { margin: 0; }
+  .case .outcome b { font-weight: 600; }
+  mark { background: var(--mark); color: inherit; border-radius: 2px; }
+
+  footer { color: var(--muted); font-size: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
+  @media (max-width: 600px) {
+    .wrap { padding: 12px; }
+    .controls select { flex: 1 1 45%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Why Psychiatrists Were Disciplined: California Case Summaries</h1>
+  <p class="subtitle">Medical Board of California decisions, 2021&ndash;2026 &middot; de-identified summaries for risk-management teaching</p>
+
+  <details class="about">
+    <summary>About these cases</summary>
+    <div id="about"></div>
+  </details>
+
+  <div class="chips" id="chips" role="group" aria-label="Filter by offense category"></div>
+
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search the summaries (e.g. clozapine, CURES, suicide, boundary)" aria-label="Search">
+    <select id="year" aria-label="Year"></select>
+    <select id="type" aria-label="Type of decision"></select>
+  </div>
+  <p class="count" id="count"></p>
+
+  <div id="list"></div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+(async function () {
+  const data = await (await fetch("data.json", { cache: "no-cache" })).json();
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  $("about").innerHTML = data.about.map((p) => `<p>${esc(p)}</p>`).join("");
+  $("footer").textContent =
+    "Summaries are drawn from the public decision documents the Medical Board of California links in its newsletter " +
+    "(Volumes 158-173). Physicians are not named. Allegations in stipulated settlements were not proven or admitted unless " +
+    "the summary says so. The decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
+    (data.unavailable.length ? ` One case (${data.unavailable.join(", ")}) is omitted because its decision document could not be retrieved.` : "");
+
+  // Category chips, plus "All". Counts include every section (a reinstatement or appendix
+  // case still shows up under its category's filter), so a chip's number matches its results.
+  let activeCat = "";
+  const chipData = [["", "All categories", data.cases.length]].concat(
+    data.categories.map((cat) => [cat, cat, data.cases.filter((c) => c.category === cat).length]).filter((x) => x[2] > 0)
+  );
+  $("chips").innerHTML = chipData
+    .map(([val, label, n]) => `<button class="chip" data-cat="${esc(val)}" aria-pressed="${val === "" }">${esc(label)}<span class="n">${n}</span></button>`)
+    .join("");
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip");
+    if (!b) return;
+    activeCat = b.dataset.cat;
+    document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    render();
+  });
+
+  const years = [...new Set(data.cases.map((c) => c.year).filter(Boolean))].sort();
+  $("year").innerHTML = `<option value="">All years</option>` + years.map((y) => `<option>${y}</option>`).join("");
+  const types = [...new Set(data.cases.map((c) => c.type))].sort();
+  $("type").innerHTML = `<option value="">All decision types</option>` + types.map((t) => `<option>${esc(t)}</option>`).join("");
+
+  function highlight(text, terms) {
+    let out = esc(text);
+    for (const t of terms) {
+      const re = new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+      out = out.replace(re, "<mark>$1</mark>");
+    }
+    return out;
+  }
+
+  function caseHTML(c, terms) {
+    const badge = (c.section === "reinstatement" ? "Underlying conduct: " : "") + c.category;
+    const also = c.also.length ? `<div class="meta">Also involves: ${esc(c.also.join("; "))}</div>` : "";
+    return `<article class="case">
+      <h3>${esc([c.id, c.year, c.type].filter(Boolean).join(" · "))}</h3>
+      <div class="meta"><span class="cat">${esc(badge)}</span></div>
+      ${also}
+      ${c.narrative.map((p) => `<p>${highlight(p, terms)}</p>`).join("")}
+      <p class="outcome"><b>Board outcome:</b> ${highlight(c.outcome, terms)}</p>
+    </article>`;
+  }
+
+  function render() {
+    const terms = $("q").value.trim().toLowerCase().split(/\s+/).filter((t) => t.length > 1);
+    const year = $("year").value, type = $("type").value;
+    const shown = data.cases.filter((c) => {
+      if (activeCat && c.category !== activeCat) return false;
+      if (year && c.year !== year) return false;
+      if (type && c.type !== type) return false;
+      if (!terms.length) return true;
+      const hay = (c.narrative.join(" ") + " " + c.outcome + " " + c.category + " " + c.also.join(" ") + " " + c.type).toLowerCase();
+      return terms.every((t) => hay.includes(t));
+    });
+
+    let html = "";
+    let lastCat = null;
+    for (const section of ["main", "reinstatement", "appendix"]) {
+      const group = shown.filter((c) => c.section === section);
+      if (!group.length) continue;
+      if (section !== "main") {
+        const s = data.sections[section];
+        html += `<h2 class="section-head">${esc(s.title)} (${group.length})</h2><p class="section-intro">${esc(s.intro)}</p>`;
+      }
+      for (const c of group) {
+        if (section === "main" && c.category !== lastCat) {
+          const n = group.filter((x) => x.category === c.category).length;
+          html += `<h2 class="section-head">${esc(c.category)} (${n})</h2>`;
+          lastCat = c.category;
+        }
+        html += caseHTML(c, terms);
+      }
+    }
+    $("list").innerHTML = html || `<p class="count">No cases match these filters.</p>`;
+    $("count").textContent = `Showing ${shown.length} of ${data.cases.length} cases`;
+  }
+
+  let timer;
+  $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 150); });
+  $("year").addEventListener("change", render);
+  $("type").addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>
