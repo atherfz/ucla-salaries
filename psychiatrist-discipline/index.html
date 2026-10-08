@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Psychiatrist Discipline Case Summaries (California, 2021-2026)</title>
+<title>Psychiatrist Discipline Case Summaries</title>
 <style>
   :root {
     --bg: #ffffff;
@@ -102,14 +102,14 @@
   footer { color: var(--muted); font-size: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
   @media (max-width: 600px) {
     .wrap { padding: 12px; }
-    .controls select { flex: 1 1 45%; }
+    .controls select { flex: 1 1 30%; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Why Psychiatrists Were Disciplined: California Case Summaries</h1>
-  <p class="subtitle">Medical Board of California decisions, 2021&ndash;2026 &middot; de-identified summaries for risk-management teaching</p>
+  <h1>Why Psychiatrists Were Disciplined: State Medical Board Cases</h1>
+  <p class="subtitle" id="subtitle">State medical board decisions, 2021&ndash;2026 &middot; de-identified summaries for risk-management teaching</p>
 
   <details class="about">
     <summary>About these cases</summary>
@@ -120,6 +120,7 @@
 
   <div class="controls">
     <input type="search" id="q" placeholder="Search the summaries (e.g. clozapine, CURES, suicide, boundary)" aria-label="Search">
+    <select id="state" aria-label="State"></select>
     <select id="year" aria-label="Year"></select>
     <select id="type" aria-label="Type of decision"></select>
   </div>
@@ -137,11 +138,14 @@
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   $("about").innerHTML = data.about.map((p) => `<p>${esc(p)}</p>`).join("");
+  $("subtitle").innerHTML = `${esc(data.states.join(", "))} medical board decisions, 2021&ndash;2026 &middot; ` +
+    "de-identified summaries for risk-management teaching";
   $("footer").textContent =
-    "Summaries are drawn from the public decision documents the Medical Board of California links in its newsletter " +
-    "(Volumes 158-173). Physicians are not named. Allegations in stipulated settlements were not proven or admitted unless " +
-    "the summary says so. The decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
-    (data.unavailable.length ? ` One case (${data.unavailable.join(", ")}) is omitted because its decision document could not be retrieved.` : "");
+    `Summaries are drawn from the public decision documents of the ${data.states.join(", ")} medical boards. ` +
+    "Physicians are not named. Allegations in settlements were not proven or admitted unless the summary says so. " +
+    "Many decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
+    (data.unavailable.length ? ` ${data.unavailable.length === 1 ? "One case is" : data.unavailable.length + " cases are"} ` +
+      "omitted because the board's decision document could not be retrieved." : "");
 
   // Category chips, plus "All". Counts include every section (a reinstatement or appendix
   // case still shows up under its category's filter), so a chip's number matches its results.
@@ -160,6 +164,7 @@
     render();
   });
 
+  $("state").innerHTML = `<option value="">All states</option>` + data.states.map((s) => `<option>${esc(s)}</option>`).join("");
   const years = [...new Set(data.cases.map((c) => c.year).filter(Boolean))].sort();
   $("year").innerHTML = `<option value="">All years</option>` + years.map((y) => `<option>${y}</option>`).join("");
   const types = [...new Set(data.cases.map((c) => c.type))].sort();
@@ -178,7 +183,7 @@
     const badge = (c.section === "reinstatement" ? "Underlying conduct: " : "") + c.category;
     const also = c.also.length ? `<div class="meta">Also involves: ${esc(c.also.join("; "))}</div>` : "";
     return `<article class="case">
-      <h3>${esc([c.id, c.year, c.type].filter(Boolean).join(" · "))}</h3>
+      <h3>${esc([c.id, c.state, c.year, c.type].filter(Boolean).join(" · "))}</h3>
       <div class="meta"><span class="cat">${esc(badge)}</span></div>
       ${also}
       ${c.narrative.map((p) => `<p>${highlight(p, terms)}</p>`).join("")}
@@ -188,13 +193,14 @@
 
   function render() {
     const terms = $("q").value.trim().toLowerCase().split(/\s+/).filter((t) => t.length > 1);
-    const year = $("year").value, type = $("type").value;
+    const state = $("state").value, year = $("year").value, type = $("type").value;
     const shown = data.cases.filter((c) => {
       if (activeCat && c.category !== activeCat) return false;
+      if (state && c.state !== state) return false;
       if (year && c.year !== year) return false;
       if (type && c.type !== type) return false;
       if (!terms.length) return true;
-      const hay = (c.narrative.join(" ") + " " + c.outcome + " " + c.category + " " + c.also.join(" ") + " " + c.type).toLowerCase();
+      const hay = (c.narrative.join(" ") + " " + c.outcome + " " + c.category + " " + c.also.join(" ") + " " + c.type + " " + c.state).toLowerCase();
       return terms.every((t) => hay.includes(t));
     });
 
@@ -222,6 +228,7 @@
 
   let timer;
   $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 150); });
+  $("state").addEventListener("change", render);
   $("year").addEventListener("change", render);
   $("type").addEventListener("change", render);
   render();
