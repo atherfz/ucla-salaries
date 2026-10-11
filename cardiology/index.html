@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UC Cardiologist Salary Database (2010-2025)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --row-alt: #f8f9fb;
+    --accent: #2563eb;
+    --accent-fg: #ffffff;
+    --header-bg: #1e3a5f;
+    --header-fg: #ffffff;
+    --input-bg: #ffffff;
+    --hover: #eef2ff;
+    --card-bg: #f4f6fa;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14141f;
+      --fg: #e8e8f0;
+      --muted: #9ca3af;
+      --border: #2e2e42;
+      --row-alt: #1a1a28;
+      --accent: #5b8def;
+      --accent-fg: #0b0b14;
+      --header-bg: #101c30;
+      --header-fg: #e8e8f0;
+      --input-bg: #1e1e2e;
+      --hover: #23233a;
+      --card-bg: #1a1a28;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0; }
+  .subtitle { color: var(--muted); font-size: 12.5px; margin: 0 0 4px; }
+  .subtitle a { color: var(--accent); }
+  .crosslink { font-size: 12.5px; margin: 0 0 16px; }
+  .crosslink a { color: var(--accent); }
+
+  .summary {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  .summary-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .summary-head select {
+    padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--input-bg); color: var(--fg); font-size: 13px;
+  }
+  .summary table { min-width: 520px; }
+  .summary thead th { cursor: default; position: static; }
+  .summary tbody tr:nth-child(even) { background: transparent; }
+  .summary tbody tr.total td { font-weight: 600; }
+  .summary-note { color: var(--muted); font-size: 11.5px; margin: 8px 0 0; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .controls input[type="search"] {
+    flex: 1 1 220px;
+    min-width: 160px;
+  }
+  .controls input, .controls select {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--fg);
+    font-size: 13.5px;
+  }
+  .result-count { color: var(--muted); font-size: 12.5px; margin-bottom: 8px; }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    color: var(--header-fg);
+    text-align: left;
+    padding: 9px 10px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  thead th .arrow { opacity: 0.6; font-size: 10px; margin-left: 3px; }
+  tbody td {
+    padding: 7px 10px;
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td.wrap-cell { white-space: normal; min-width: 140px; }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: var(--hover); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+  .est-flag { color: var(--accent); cursor: help; }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .pagination button {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--input-bg);
+    color: var(--fg);
+    cursor: pointer;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: default; }
+  .pagination button:not(:disabled):hover { background: var(--hover); }
+  .pagination select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--fg); }
+
+  footer {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  footer a { color: var(--accent); }
+
+  .empty-state { padding: 30px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>UC Cardiologist Salary Database</h1>
+  <p class="subtitle">
+    Cardiologist (HCOMP faculty) pay at UCLA, UCSF, UCSD, UC Irvine, UC Davis &amp; UC Riverside, 2010&ndash;2025 &middot;
+    Source: <a href="https://ucannualwage.ucop.edu/wage/" target="_blank" rel="noopener">UC Annual Wage database</a>
+    &middot; <span id="recordCountMeta"></span>
+  </p>
+  <p class="crosslink">Full campus databases: <a href="../">UCLA</a> &middot; <a href="../ucsf/">UCSF</a> &middot; <a href="../ucsd/">UCSD</a> &middot; <a href="../uci/">UC Irvine</a> &middot; <a href="../ucd/">UC Davis</a> &middot; <a href="../ucr/">UC Riverside</a> &middot; Also: <a href="../psychiatry/">UC Psychiatrist Salaries</a> &middot; <a href="../gi/">UC Gastroenterologist Salaries</a></p>
+
+  <section class="summary" aria-label="Summary by campus">
+    <div class="summary-head">
+      <h2>Gross pay by campus</h2>
+      <select id="summaryYear" aria-label="Summary year"></select>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Campus</th>
+            <th class="num">Cardiologists</th>
+            <th class="num">Median</th>
+            <th class="num">75th percentile</th>
+            <th class="num">Highest</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
+    <p class="summary-note">Gross pay includes base salary plus clinical, administrative and other compensation, and covers
+    only the part of the year the person was employed, so partial-year hires and departures pull the median down.
+    People listed with $0 pay for the year (e.g. on leave or holding an unpaid appointment) are not counted here.</p>
+  </section>
+
+  <div class="controls">
+    <input type="search" id="searchBox" placeholder="Search name, title, or specialty&hellip;" aria-label="Search">
+    <select id="yearFilter" aria-label="Filter by year"></select>
+    <select id="campusFilter" aria-label="Filter by campus"></select>
+    <select id="subFilter" aria-label="Filter by subspecialty"></select>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+
+  <div class="table-scroll">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th data-key="year">Year<span class="arrow"></span></th>
+          <th data-key="campus">Campus<span class="arrow"></span></th>
+          <th data-key="name">Name<span class="arrow"></span></th>
+          <th data-key="title">Title<span class="arrow"></span></th>
+          <th data-key="sub">Subspecialty<span class="arrow"></span></th>
+          <th data-key="gross" class="num">Gross Pay<span class="arrow"></span></th>
+          <th data-key="reg" class="num">Regular<span class="arrow"></span></th>
+          <th data-key="ot" class="num">Overtime<span class="arrow"></span></th>
+          <th data-key="other" class="num">Other<span class="arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <button id="prevPage">&larr; Prev</button>
+    <span id="pageIndicator"></span>
+    <button id="nextPage">Next &rarr;</button>
+    <span style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+      Rows per page:
+      <select id="pageSize">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+        <option value="250">250</option>
+      </select>
+    </span>
+  </div>
+
+  <footer>
+    <p><strong>About this data:</strong> Pay figures come directly from UC's own public payroll disclosure, limited to
+    physician (Health Sciences Compensation, &ldquo;HCOMP&rdquo;) titles at the six UC campuses with medical schools.
+    UC Riverside has only a handful of identified cardiologists, with low UC pay that suggests part-time appointments. Residents and fellows are
+    redacted by UC under federal student-privacy law and are not included.</p>
+    <p><strong>Who counts as a cardiologist:</strong> UC's payroll data does not record specialty. Specialty was inferred
+    for each campus by cross-referencing names against the public
+    <a href="https://npiregistry.cms.hhs.gov/" target="_blank" rel="noopener">NPI Registry</a>, CMS's
+    <a href="https://data.cms.gov/provider-data/dataset/mj5m-pzi6" target="_blank" rel="noopener">National Downloadable File</a>
+    and each health system's own provider directory. This page includes everyone whose inferred specialty is
+    cardiovascular disease or a cardiology subspecialty (interventional, electrophysiology, advanced heart failure &amp;
+    transplant, adult congenital heart disease, cardio-oncology), plus pediatric cardiology. Cardiothoracic and cardiac
+    surgeons are excluded, as are UC Davis research faculty listed under cardiovascular medicine or research who have
+    no NPI and do not see patients. Gross pay includes clinical and administrative stipends, which can be several
+    times base salary. Entries marked with
+    <span class="est-flag">&dagger;</span> had more than one plausible name match in the registry and carry more
+    name-collision risk than the rest. Where the registry listed only a broad specialty (such as Internal Medicine or Pediatrics), a more specific one was taken from CMS's records for the same NPI number or from the health system's own directory. Registry matches to a non-physician provider were discarded unless that person was
+    the only California provider with the name and practiced near the campus.</p>
+    <p><strong>Cardiologists are undercounted.</strong> Anyone whose specialty could not be confidently resolved cannot
+    be identified as a cardiologist and is missing here. That is <span id="unresolvedText"></span> named physicians across
+    the six campuses, and the gap is largest in older years, since people who have left UC are no longer in current
+    directories. Headcounts are best read as a lower bound. This is a best-effort estimate, not an official UC record,
+    and should not be treated as verified identification of any individual's medical specialty.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Only flag Medium-confidence NPI matches as uncertain (same convention as the campus databases).
+  var CONF_LOW = { M: true };
+
+  var state = {
+    data: null,
+    filtered: [],
+    sortKey: 'gross',
+    sortDir: -1,
+    page: 1,
+    pageSize: 50,
+  };
+
+  fetch('data.json', { cache: 'no-cache' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { init(d); })
+    .catch(function (err) {
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="9" class="empty-state">Could not load data.json (' + err + ')</td></tr>';
+    });
+
+  function options(allLabel, labels) {
+    return '<option value="">' + allLabel + '</option>' +
+      labels.map(function (l, i) { return '<option value="' + i + '">' + escapeHtml(l) + '</option>'; }).join('');
+  }
+
+  function init(d) {
+    state.data = d;
+    document.getElementById('recordCountMeta').textContent =
+      d.meta.recordCount.toLocaleString() + ' records · last updated ' + d.meta.generated;
+
+    var unresolved = 0, named = 0;
+    Object.keys(d.meta.unresolved).forEach(function (k) {
+      unresolved += d.meta.unresolved[k][0];
+      named += d.meta.unresolved[k][1];
+    });
+    document.getElementById('unresolvedText').textContent =
+      'roughly ' + (Math.round(unresolved / 100) * 100).toLocaleString() + ' of the ~' +
+      (Math.round(named / 100) * 100).toLocaleString();
+
+    document.getElementById('yearFilter').innerHTML = '<option value="">All years</option>' +
+      d.meta.years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+    document.getElementById('campusFilter').innerHTML = options('All campuses', d.campuses);
+    document.getElementById('subFilter').innerHTML = options('All subspecialties', d.subs);
+
+    var sumSel = document.getElementById('summaryYear');
+    sumSel.innerHTML = d.meta.years.map(function (y) { return '<option value="' + y + '">' + y + '</option>'; }).join('');
+    sumSel.value = String(d.meta.years[0]);
+    sumSel.addEventListener('change', renderSummary);
+    renderSummary();
+
+    document.getElementById('searchBox').addEventListener('input', debounce(onFilterChange, 180));
+    ['yearFilter', 'campusFilter', 'subFilter'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', onFilterChange);
+    });
+    document.getElementById('prevPage').addEventListener('click', function () { changePage(-1); });
+    document.getElementById('nextPage').addEventListener('click', function () { changePage(1); });
+    document.getElementById('pageSize').addEventListener('change', function (e) {
+      state.pageSize = parseInt(e.target.value, 10);
+      state.page = 1;
+      render();
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('#dataTable thead th'), function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-key');
+        if (state.sortKey === key) {
+          state.sortDir *= -1;
+        } else {
+          state.sortKey = key;
+          state.sortDir = (key === 'name' || key === 'title' || key === 'campus' || key === 'sub') ? 1 : -1;
+        }
+        applySort();
+        state.page = 1;
+        render();
+      });
+    });
+
+    onFilterChange();
+  }
+
+  function quantile(sorted, q) {
+    var pos = (sorted.length - 1) * q;
+    var lo = Math.floor(pos), hi = Math.ceil(pos);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+  }
+
+  function summaryRow(label, pays, cls) {
+    if (!pays.length) {
+      return '<tr' + cls + '><td>' + label + '</td><td class="num">0</td>' +
+        '<td class="num muted">&mdash;</td><td class="num muted">&mdash;</td><td class="num muted">&mdash;</td></tr>';
+    }
+    pays.sort(function (a, b) { return a - b; });
+    return '<tr' + cls + '><td>' + label + '</td>' +
+      '<td class="num">' + pays.length + '</td>' +
+      '<td class="num">' + money(quantile(pays, 0.5)) + '</td>' +
+      '<td class="num">' + money(quantile(pays, 0.75)) + '</td>' +
+      '<td class="num">' + money(pays[pays.length - 1]) + '</td></tr>';
+  }
+
+  function renderSummary() {
+    var d = state.data;
+    var year = parseInt(document.getElementById('summaryYear').value, 10);
+    var byCampus = d.campuses.map(function () { return []; });
+    var all = [];
+    d.rows.forEach(function (r) {
+      if (r[0] !== year || r[6] <= 0) return;
+      byCampus[r[11]].push(r[6]);
+      all.push(r[6]);
+    });
+    document.getElementById('summaryBody').innerHTML =
+      d.campuses.map(function (c, i) { return summaryRow(escapeHtml(c), byCampus[i], ''); }).join('') +
+      summaryRow('All six campuses', all, ' class="total"');
+  }
+
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      clearTimeout(t);
+      var args = arguments;
+      t = setTimeout(function () { fn.apply(null, args); }, ms);
+    };
+  }
+
+  function onFilterChange() {
+    var q = document.getElementById('searchBox').value.trim().toLowerCase();
+    var yearVal = document.getElementById('yearFilter').value;
+    var campusVal = document.getElementById('campusFilter').value;
+    var subVal = document.getElementById('subFilter').value;
+    var d = state.data;
+
+    state.filtered = d.rows.filter(function (row) {
+      if (yearVal && String(row[0]) !== yearVal) return false;
+      if (campusVal !== '' && row[11] !== parseInt(campusVal, 10)) return false;
+      if (subVal !== '' && row[4] !== parseInt(subVal, 10)) return false;
+      if (q) {
+        var hay = (row[1] + ' ' + row[2] + ' ' + d.titles[row[3]] + ' ' + d.subs[row[4]] + ' ' +
+          d.specs[row[5]] + ' ' + d.campuses[row[11]]).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    });
+
+    applySort();
+    state.page = 1;
+    render();
+  }
+
+  function applySort() {
+    var d = state.data;
+    var key = state.sortKey;
+    var dir = state.sortDir;
+    var getters = {
+      year: function (r) { return r[0]; },
+      campus: function (r) { return d.campuses[r[11]]; },
+      name: function (r) { return (r[2] + ' ' + r[1]).toLowerCase(); },
+      title: function (r) { return d.titles[r[3]]; },
+      sub: function (r) { return r[4]; },
+      gross: function (r) { return r[6]; },
+      reg: function (r) { return r[7]; },
+      ot: function (r) { return r[8]; },
+      other: function (r) { return r[9]; },
+    };
+    var get = getters[key];
+    state.filtered.sort(function (a, b) {
+      var va = get(a), vb = get(b);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return b[6] - a[6];
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('#dataTable thead th'), function (th) {
+      var arrow = th.querySelector('.arrow');
+      if (th.getAttribute('data-key') === key) {
+        arrow.textContent = dir === 1 ? '▲' : '▼';
+      } else {
+        arrow.textContent = '';
+      }
+    });
+  }
+
+  function changePage(delta) {
+    var maxPage = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    state.page = Math.min(maxPage, Math.max(1, state.page + delta));
+    render();
+  }
+
+  function money(n) {
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function render() {
+    var d = state.data;
+    var total = state.filtered.length;
+    var maxPage = Math.max(1, Math.ceil(total / state.pageSize));
+    state.page = Math.min(state.page, maxPage);
+    var start = (state.page - 1) * state.pageSize;
+    var pageRows = state.filtered.slice(start, start + state.pageSize);
+
+    document.getElementById('resultCount').textContent =
+      total.toLocaleString() + ' record' + (total === 1 ? '' : 's') + ' matched';
+
+    var body = document.getElementById('tableBody');
+    if (pageRows.length === 0) {
+      body.innerHTML = '<tr><td colspan="9" class="empty-state">No records match your search/filters.</td></tr>';
+    } else {
+      body.innerHTML = pageRows.map(function (r) {
+        var flag = CONF_LOW[r[10]] ? ' <span class="est-flag" title="Lower-confidence specialty match">&dagger;</span>' : '';
+        return '<tr>' +
+          '<td>' + r[0] + '</td>' +
+          '<td>' + escapeHtml(d.campuses[r[11]]) + '</td>' +
+          '<td>' + escapeHtml(r[2] + ', ' + r[1]) + '</td>' +
+          '<td class="wrap-cell">' + escapeHtml(d.titles[r[3]]) + '</td>' +
+          '<td class="wrap-cell" title="' + escapeHtml(d.specs[r[5]]) + '">' + escapeHtml(d.subs[r[4]]) + flag + '</td>' +
+          '<td class="num">' + money(r[6]) + '</td>' +
+          '<td class="num">' + money(r[7]) + '</td>' +
+          '<td class="num">' + money(r[8]) + '</td>' +
+          '<td class="num">' + money(r[9]) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('pageIndicator').textContent = 'Page ' + state.page + ' of ' + maxPage;
+    document.getElementById('prevPage').disabled = state.page <= 1;
+    document.getElementById('nextPage').disabled = state.page >= maxPage;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+})();
+</script>
+</body>
+</html>

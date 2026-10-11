@@ -164,7 +164,7 @@
     Source: <a href="https://ucannualwage.ucop.edu/wage/" target="_blank" rel="noopener">UC Annual Wage database</a>
     &middot; <span id="recordCountMeta"></span>
   </p>
-  <p class="crosslink">Full campus databases: <a href="../">UCLA</a> &middot; <a href="../ucsf/">UCSF</a> &middot; <a href="../ucsd/">UCSD</a> &middot; <a href="../uci/">UC Irvine</a> &middot; <a href="../ucd/">UC Davis</a> &middot; <a href="../ucr/">UC Riverside</a> &middot; Also: <a href="../gi/">UC Gastroenterologist Salaries</a></p>
+  <p class="crosslink">Full campus databases: <a href="../">UCLA</a> &middot; <a href="../ucsf/">UCSF</a> &middot; <a href="../ucsd/">UCSD</a> &middot; <a href="../uci/">UC Irvine</a> &middot; <a href="../ucd/">UC Davis</a> &middot; <a href="../ucr/">UC Riverside</a> &middot; Also: <a href="../gi/">UC Gastroenterologist Salaries</a> &middot; <a href="../cardiology/">UC Cardiologist Salaries</a></p>
 
   <section class="summary" aria-label="Summary by campus">
     <div class="summary-head">
@@ -186,7 +186,8 @@
       </table>
     </div>
     <p class="summary-note">Gross pay includes base salary plus clinical, administrative and other compensation, and covers
-    only the part of the year the person was employed, so partial-year hires and departures pull the median down.</p>
+    only the part of the year the person was employed, so partial-year hires and departures pull the median down.
+    People listed with $0 pay for the year (e.g. on leave or holding an unpaid appointment) are not counted here.</p>
   </section>
 
   <div class="controls">
@@ -364,7 +365,7 @@
     var byCampus = d.campuses.map(function () { return []; });
     var all = [];
     d.rows.forEach(function (r) {
-      if (r[0] !== year) return;
+      if (r[0] !== year || r[6] <= 0) return;
       byCampus[r[11]].push(r[6]);
       all.push(r[6]);
     });

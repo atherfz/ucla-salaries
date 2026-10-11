@@ -2,8 +2,8 @@
 
 Static, self-contained search pages for UC HCOMP salary datasets (2010-2025). The repo root is the
 UCLA database; `/ucsf/`, `/ucsd/`, `/uci/`, `/ucd/`, and `/ucr/` hold the same page/pipeline for UCSF, UC San Diego, UC Irvine, UC Davis, and UC Riverside.
-`/psychiatry/` and `/gi/` combine psychiatrists and gastroenterologists from all six campuses (selected by
-inferred specialty; built by `build_specialty_combined.py psych|gi` in the main project folder), each with a
+`/psychiatry/`, `/gi/` and `/cardiology/` combine psychiatrists, gastroenterologists and cardiologists from all six
+campuses (selected by inferred specialty; built by `build_specialty_combined.py psych|gi|cardio` in the main project folder), each with a
 per-campus median / 75th percentile summary.
 
 ## Files
