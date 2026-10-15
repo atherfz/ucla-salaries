@@ -141,7 +141,8 @@
   $("subtitle").innerHTML = `${esc(data.states.join(", "))} medical board decisions, 2021&ndash;2026 &middot; ` +
     "de-identified summaries for risk-management teaching";
   $("footer").textContent =
-    `Summaries are drawn from the public decision documents of the ${data.states.join(", ")} medical boards. ` +
+    `Summaries are drawn from the public decision documents of the ${data.states.join(", ")} medical boards ` +
+    "(for New York and Texas, from the boards' published summaries of each action). " +
     "Physicians are not named. Allegations in settlements were not proven or admitted unless the summary says so. " +
     "Many decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
     (data.unavailable.length ? ` ${data.unavailable.length === 1 ? "One case is" : data.unavailable.length + " cases are"} ` +
