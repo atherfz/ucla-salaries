@@ -56,6 +56,27 @@
   }
   .about summary { cursor: pointer; font-weight: 600; }
   .about p { margin: 8px 0 0; }
+  .sources {
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+  .sources summary { font-weight: 600; }
+  .sources ul { list-style: none; margin: 6px 0 0; padding: 0; }
+  .sources li { padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .sources li:last-child { border-bottom: none; }
+  .sources .st { font-weight: 600; }
+  .sources .n { color: var(--muted); font-size: 12px; }
+  .sources .src { display: block; color: var(--muted); }
+  .sources .tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 9px;
+    background: var(--chip-bg);
+    color: var(--chip-fg);
+    font-size: 11px;
+  }
 
   .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .chip {
@@ -114,6 +135,10 @@
   <details class="about">
     <summary>About these cases</summary>
     <div id="about"></div>
+    <details class="sources">
+      <summary id="sources-title">Sources by state</summary>
+      <ul id="sources"></ul>
+    </details>
   </details>
 
   <div class="chips" id="chips" role="group" aria-label="Filter by offense category"></div>
@@ -138,11 +163,20 @@
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   $("about").innerHTML = data.about.map((p) => `<p>${esc(p)}</p>`).join("");
-  $("subtitle").innerHTML = `${esc(data.states.join(", "))} medical board decisions, 2021&ndash;2026 &middot; ` +
+  const perState = {};
+  data.cases.forEach((c) => { perState[c.state] = (perState[c.state] || 0) + 1; });
+  $("sources-title").textContent = `Sources by state (${data.sources.length})`;
+  $("sources").innerHTML = data.sources.map((s) => {
+    const n = perState[s.name] || 0;
+    return `<li><span class="st">${esc(s.name)}</span> <span class="n">&middot; ${n} case${n === 1 ? "" : "s"}</span>` +
+      (s.summary_only ? `<span class="tag">board summaries</span>` : "") +
+      `<span class="src">${esc(s.board)}: ${esc(s.source)}</span></li>`;
+  }).join("");
+  $("subtitle").innerHTML = `Medical board decisions from ${data.states.length} states, 2021&ndash;2026 &middot; ` +
     "de-identified summaries for risk-management teaching";
   $("footer").textContent =
-    `Summaries are drawn from the public decision documents of the ${data.states.join(", ")} medical boards ` +
-    "(for New York, Texas and Illinois, from the boards' published summaries of each action). " +
+    `Summaries are drawn from the public records of ${data.states.length} state medical boards ` +
+    "(listed under “Sources by state” above; for New York, Texas and Illinois, the boards' published summaries of each action). " +
     "Physicians are not named. Allegations in settlements were not proven or admitted unless the summary says so. " +
     "Many decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
     (data.unavailable.length ? ` ${data.unavailable.length === 1 ? "One case is" : data.unavailable.length + " cases are"} ` +
