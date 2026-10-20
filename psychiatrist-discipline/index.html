@@ -114,6 +114,8 @@
   }
   .case h3 { font-size: 14.5px; margin: 0 0 4px; }
   .case .meta { color: var(--muted); font-size: 12.5px; margin-bottom: 8px; }
+  .case .fo { display: inline-block; border: 1px solid var(--border); color: var(--muted); border-radius: 4px; padding: 0 6px; margin-right: 6px; }
+  .case .rel a, .count a { color: var(--accent); }
   .case .cat { display: inline-block; background: var(--chip-bg); color: var(--chip-fg); border-radius: 4px; padding: 1px 6px; margin-right: 6px; }
   .case p { margin: 0 0 8px; }
   .case .outcome { margin: 0; }
@@ -123,7 +125,7 @@
   footer { color: var(--muted); font-size: 12px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
   @media (max-width: 600px) {
     .wrap { padding: 12px; }
-    .controls select { flex: 1 1 30%; }
+    .controls select { flex: 1 1 30%; min-width: 0; max-width: 100%; }
   }
 </style>
 </head>
@@ -172,22 +174,29 @@
       (s.summary_only ? `<span class="tag">board summaries</span>` : "") +
       `<span class="src">${esc(s.board)}: ${esc(s.source)}</span></li>`;
   }).join("");
+  const summaryOnly = data.sources.filter((s) => s.summary_only).map((s) => s.name);
+  const listText = (a) => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
   $("subtitle").innerHTML = `Medical board decisions from ${data.states.length} states, 2021&ndash;2026 &middot; ` +
     "de-identified summaries for risk-management teaching";
   $("footer").textContent =
     `Summaries are drawn from the public records of ${data.states.length} state medical boards ` +
-    "(listed under “Sources by state” above; for New York, Texas, Illinois, Washington and Tennessee, the boards' published summaries of each action). " +
+    "(listed under “Sources by state” above" +
+    (summaryOnly.length ? `; for ${listText(summaryOnly)}, the boards' published summaries of each action` : "") + "). " +
     "Physicians are not named. Allegations in settlements were not proven or admitted unless the summary says so. " +
     "Many decisions are scanned images read with OCR, so check the original before relying on a specific detail." +
     (data.unavailable.length ? ` ${data.unavailable.length === 1 ? "One case is" : data.unavailable.length + " cases are"} ` +
       "omitted because the board's decision document could not be retrieved." : "");
 
-  // Category chips, plus "All". Counts include every section (a reinstatement or appendix
-  // case still shows up under its category's filter), so a chip's number matches its results.
-  let activeCat = "";
-  const chipData = [["", "All categories", data.cases.length]].concat(
-    data.categories.map((cat) => [cat, cat, data.cases.filter((c) => c.category === cat).length]).filter((x) => x[2] > 0)
+  // Category chips, plus "All". Counts include the reinstatement and appendix sections but not
+  // follow-on actions (a board acting because another board already acted on the same conduct),
+  // so each episode of conduct is counted once; follow-ons stay listed in their own section.
+  let activeCat = "", activeGroup = "";
+  const counted = data.cases.filter((c) => c.section !== "followon");
+  const chipData = [["", "All categories", counted.length]].concat(
+    data.categories.map((cat) => [cat, cat, counted.filter((c) => c.category === cat).length]).filter((x) => x[2] > 0)
   );
+  const byGroup = {};
+  data.cases.forEach((c) => { if (c.group) (byGroup[c.group] = byGroup[c.group] || []).push(c); });
   $("chips").innerHTML = chipData
     .map(([val, label, n]) => `<button class="chip" data-cat="${esc(val)}" aria-pressed="${val === "" }">${esc(label)}<span class="n">${n}</span></button>`)
     .join("");
@@ -195,6 +204,7 @@
     const b = e.target.closest(".chip");
     if (!b) return;
     activeCat = b.dataset.cat;
+    activeGroup = "";
     document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === b));
     render();
   });
@@ -217,10 +227,16 @@
   function caseHTML(c, terms) {
     const badge = (c.section === "reinstatement" ? "Underlying conduct: " : "") + c.category;
     const also = c.also.length ? `<div class="meta">Also involves: ${esc(c.also.join("; "))}</div>` : "";
+    const fo = c.section === "followon" ? `<span class="fo">Reciprocal follow-on</span>` : "";
+    const others = c.group ? byGroup[c.group].filter((x) => x !== c).sort((a, b) => a.date.localeCompare(b.date)) : [];
+    const rel = others.length ? `<div class="meta rel">Same psychiatrist, other actions: ` +
+      others.map((x) => `${esc(x.id)} (${esc(x.state)}${x.year ? ", " + x.year : ""}${x.lead ? ", lead case" : ""})`).join("; ") +
+      ` &middot; <a href="#" data-group="${esc(c.group)}">show all ${others.length + 1}</a></div>` : "";
     return `<article class="case">
       <h3>${esc([c.id, c.state, c.year, c.type].filter(Boolean).join(" · "))}</h3>
-      <div class="meta"><span class="cat">${esc(badge)}</span></div>
+      <div class="meta">${fo}<span class="cat">${esc(badge)}</span></div>
       ${also}
+      ${rel}
       ${c.narrative.map((p) => `<p>${highlight(p, terms)}</p>`).join("")}
       <p class="outcome"><b>Board outcome:</b> ${highlight(c.outcome, terms)}</p>
     </article>`;
@@ -230,6 +246,7 @@
     const terms = $("q").value.trim().toLowerCase().split(/\s+/).filter((t) => t.length > 1);
     const state = $("state").value, year = $("year").value, type = $("type").value;
     const shown = data.cases.filter((c) => {
+      if (activeGroup) return c.group === activeGroup;
       if (activeCat && c.category !== activeCat) return false;
       if (state && c.state !== state) return false;
       if (year && c.year !== year) return false;
@@ -241,7 +258,7 @@
 
     let html = "";
     let lastCat = null;
-    for (const section of ["main", "reinstatement", "appendix"]) {
+    for (const section of ["main", "followon", "reinstatement", "appendix"]) {
       const group = shown.filter((c) => c.section === section);
       if (!group.length) continue;
       if (section !== "main") {
@@ -258,8 +275,20 @@
       }
     }
     $("list").innerHTML = html || `<p class="count">No cases match these filters.</p>`;
-    $("count").textContent = `Showing ${shown.length} of ${data.cases.length} cases`;
+    const nFo = shown.filter((c) => c.section === "followon").length;
+    $("count").innerHTML = activeGroup
+      ? `Showing all ${shown.length} actions against one psychiatrist &middot; <a href="#" data-clear="1">back to all cases</a>`
+      : `Showing ${shown.length} of ${data.cases.length} cases` + (nFo ? ` (${nFo} follow-on action${nFo === 1 ? "" : "s"} by other boards, listed separately)` : "");
   }
+
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[data-group], a[data-clear]");
+    if (!a) return;
+    e.preventDefault();
+    activeGroup = a.dataset.group || "";
+    render();
+    window.scrollTo({ top: $("count").offsetTop - 10 });
+  });
 
   let timer;
   $("q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 150); });
