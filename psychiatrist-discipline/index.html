@@ -176,10 +176,14 @@
   }).join("");
   const summaryOnly = data.sources.filter((s) => s.summary_only).map((s) => s.name);
   const listText = (a) => a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
-  $("subtitle").innerHTML = `Medical board decisions from ${data.states.length} states, 2021&ndash;2026 &middot; ` +
+  // The District of Columbia is not a state: "all 50 states and the District of Columbia".
+  const hasDC = data.states.includes("District of Columbia");
+  const nStates = data.states.length - (hasDC ? 1 : 0);
+  const where = (nStates === 50 ? "all 50 states" : `${nStates} states`) + (hasDC ? " and the District of Columbia" : "");
+  $("subtitle").innerHTML = `Medical board decisions from ${where}, 2021&ndash;2026 &middot; ` +
     "de-identified summaries for risk-management teaching";
   $("footer").textContent =
-    `Summaries are drawn from the public records of ${data.states.length} state medical boards ` +
+    `Summaries are drawn from the public records of the medical boards of ${where} ` +
     "(listed under “Sources by state” above" +
     (summaryOnly.length ? `; for ${listText(summaryOnly)}, the boards' published summaries of each action` : "") + "). " +
     "Physicians are not named. Allegations in settlements were not proven or admitted unless the summary says so. " +
